@@ -1,0 +1,93 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # Backend Job
+  backend:
+    name: Backend - Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      # Code auschecken
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Go installieren und testen
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.20
+
+      - name: Install dependencies
+        run: go mod tidy
+        working-directory: ./backend
+
+      - name: Run tests
+        run: go test ./...
+        working-directory: ./backend
+
+      # Optional: Build binary
+      - name: Build binary
+        run: go build -o my-backend-app
+        working-directory: ./backend
+
+  # Frontend Job
+  frontend:
+    name: Frontend - Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      # Code auschecken
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Node.js und Angular CLI einrichten
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install Angular CLI
+        run: npm install -g @angular/cli
+
+      # Abhängigkeiten installieren
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./frontend
+
+      # Tests ausführen
+      - name: Run tests
+        run: ng test --watch=false --browsers=ChromeHeadless
+        working-directory: ./frontend
+
+      # Build durchführen
+      - name: Build Angular App
+        run: ng build --prod
+        working-directory: ./frontend
+
+  # Optional: Deployment Job
+  deploy:
+    name: Deploy Application
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Beispiel: Deployment zu einem Server
+      - name: Deploy Backend
+        run: |
+          echo "Deploying Backend..."
+          # SCP oder SSH-Befehl für Deployment hier einfügen
+          # scp ./backend/my-backend-app user@your-server:/path/to/deploy
+
+      - name: Deploy Frontend
+        run: |
+          echo "Deploying Frontend..."
+          # SCP oder SSH-Befehl für Deployment hier einfügen
+          # scp -r ./frontend/dist/ user@your-server:/path/to/deploy
